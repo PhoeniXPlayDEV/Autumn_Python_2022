@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
+def plot_levels(func, fig_ax=None, xrange=None, yrange=None, levels=None, figsize=(10, 10), nrows=1, ncols=1):
+    """
+    Plotting the contour lines of the function.
+
+    Example:
+    --------
+    >> oracle = oracles.QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
+    >> plot_levels(oracle.func)
+    """
+    if fig_ax is None or len(fig_ax) != 2:
+        fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+    else:
+        fig, ax = fig_ax[0], fig_ax[1]
+
+    if xrange is None:
+        xrange = [-6, 6]
+    if yrange is None:
+        yrange = [-5, 5]
+    if levels is None:
+        levels = [0, 0.25, 1, 4, 9, 16, 25]
+        
+    x = np.linspace(xrange[0], xrange[1], 100)
+    y = np.linspace(yrange[0], yrange[1], 100)
+    X, Y = np.meshgrid(x, y)
+    Z = np.zeros(X.shape)
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            Z[i, j] = func(np.array([X[i, j], Y[i, j]]))
+
+    CS = ax.contour(X, Y, Z, levels=levels, colors='k') # , linewidth=4.0
+    ax.clabel(CS, inline=1, fontsize=8)
+    ax.grid()
+    return fig, ax
+
+        
+def plot_trajectory(func, history, fig_ax=None, fit_axis=False, label=None, c=None, figsize=(10, 10), nrows=1, ncols=1):
+    """
+    Plotting the trajectory of a method. 
+    Use after plot_levels(...).
+
+    Example:
+    --------
+    >> oracle = oracles.QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
+    >> [x_star, msg, history] = optimization.gradient_descent(oracle, np.array([3.0, 1.5], trace=True)
+    >> plot_levels(oracle.func)
+    >> plot_trajectory(oracle.func, history['x'])
+    """
+    if fig_ax is None or len(fig_ax) != 2:
+        fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+    else:
+        fig, ax = fig_ax[0], fig_ax[1]
+
+    x_values, y_values = zip(*history)
+    ax.plot(x_values, y_values, '-v', linewidth=5.0, ms=12.0,
+             alpha=1.0, c=('r' if c is None else c), label=label)
+    
+    # Tries to adapt axis-ranges for the trajectory:
+    if fit_axis:
+        xmax, ymax = np.max(x_values), np.max(y_values)
+        COEF = 1.5
+        xrange = [-xmax * COEF, xmax * COEF]
+        yrange = [-ymax * COEF, ymax * COEF]
+        ax.xlim(xrange)
+        ax.ylim(yrange)
+    return fig, ax
+
